@@ -31,7 +31,16 @@ bool KeyboardController::init()
 {
   if(ec_fd == -1) // check if root
   {
-    std::cerr << "Start the app as root." << std::endl;
+    std::cerr << "[WARNING] Ec I/O not found. Trying to load ec_sys..." << std::endl;
+    std::system("modprobe ec_sys write_support=1");
+    std::cout << "[LOG] ec_sys loaded." << std::endl;
+
+    ec_fd = open(EC_PATH, O_RDWR);
+  }
+
+  if(ec_fd == -1)
+  {
+    std::cerr << "[ERROR] Cannot access Embedded Controller. Please run as root." << std::endl;
     return false;
   }
   
