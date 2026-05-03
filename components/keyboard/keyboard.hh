@@ -4,12 +4,15 @@
 #include <string>
 #include <map>
 #include <cstdint>
+#include <mutex>
 
 struct ZoneData {
   uint8_t init;
   uint8_t commit;
   uint8_t state;
 };
+
+enum class KBPattern : uint8_t { SOLID = 0x01, BREATHE = 0x03, CYCLE = 0x06 };
 
 class KeyboardController {
 public:
@@ -18,7 +21,7 @@ public:
 
   bool init();
   void set_color(uint8_t r, uint8_t g, uint8_t b, uint8_t brightness, const std::string& zone_name);
-  void set_mode(const std::string& mode_name);
+  void set_mode(KBPattern p);
   void restore_original();
 
 private:
@@ -35,7 +38,9 @@ private:
   static constexpr uint16_t REG_MODE_2 = 0xE2;
 
   int ec_fd = -1;
-  std::string current_mode = "solid";
+  std::mutex ec_mutex;
+
+  KBPattern current_pattern = KBPattern::SOLID;
     
   struct {
     uint8_t r, g, b, pwm;
@@ -44,6 +49,7 @@ private:
   uint8_t read_ec(uint16_t offset);
   void write_ec(uint16_t offset, uint8_t val);
   void trigger_latch(const ZoneData& zone);
+  void set_mode_internal(KBPattern p);
 };
 
 #endif
