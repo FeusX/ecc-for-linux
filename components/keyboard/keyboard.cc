@@ -7,14 +7,6 @@
 #include <chrono>
 #include <array>
 
-const std::map<std::string, ZoneData> ZONES = {
-//  ZONE     INIT  COMMIT  STATE 
-  {"left",  {0x51,   0x58,  0x52}}, 
-  {"mid",   {0x41,   0x48,  0x42}},
-  {"right", {0x31,   0x38,  0x32}},
-  {"all",   {0x01,   0x08,  0x02}}
-};
-
 const std::map<std::string, std::array<uint8_t, 3>> preset_colors = {
   {"red",    {255, 0, 0}},
   {"green",  {0, 255, 0}},
@@ -63,35 +55,38 @@ void KeyboardController::write_ec(uint16_t offset, uint8_t val)
 {
   lseek(ec_fd, offset, SEEK_SET);
   if(write(ec_fd, &val, 1) != 1)
-  { std::cerr << "Write failed at 0x" << std::hex << offset << std::dec << std::endl; }
+  { std::cerr << "[ERROR] Write failed at 0x" << std::hex << offset << std::dec << std::endl; }
 }
 
-void KeyboardController::trigger_latch(const ZoneData& zone)
+void KeyboardController::trigger_latch(ZoneID zone)
 {
-  write_ec(REG_ZONE, zone.init);
+  uint8_t base = static_cast<uint8_t>(zone);
+
+  // init byte ends with 0x01
+  write_ec(REG_ZONE, base | 0x01);
   std::this_thread::sleep_for(std::chrono::milliseconds(10));
-  
-  write_ec(REG_ZONE, zone.commit);
+
+  // commit byte ends with 0x08  
+  write_ec(REG_ZONE, base | 0x08);
   std::this_thread::sleep_for(std::chrono::milliseconds(10));
-  
-  write_ec(REG_ZONE, zone.state);
+
+  // state byte ends with 0x02
+  write_ec(REG_ZONE, base | 0x02);
   std::this_thread::sleep_for(std::chrono::milliseconds(10));
 }
 
-void KeyboardController::set_color(uint8_t r, uint8_t g, uint8_t b, uint8_t brightness, const std::string& zone_name)
+void KeyboardController::set_color(uint8_t r, uint8_t g, uint8_t b, uint8_t brightness, ZoneID zone)
 {
   std::lock_guard<std::mutex> lock(ec_mutex);
-  
-  if(ZONES.find(zone_name) == ZONES.end()) { return; }
 
   if(current_pattern != KBPattern::SOLID) { set_mode_internal(KBPattern::SOLID); }
-
+  
   write_ec(REG_RED, r);
   write_ec(REG_GREEN, g);
   write_ec(REG_BLUE, b);
   write_ec(REG_PWM, brightness);
-  
-  trigger_latch(ZONES.at(zone_name));
+
+  trigger_latch(zone);
 }
 
 void KeyboardController::set_mode_internal(KBPattern p)
@@ -110,4 +105,4 @@ void KeyboardController::set_mode(KBPattern p)
 }
 
 void KeyboardController::restore_original()
-{ set_color(orig_state.r, orig_state.g, orig_state.b, orig_state.pwm, "all"); }
+{ set_color(orig_state.r, orig_state.g, orig_state.b, orig_state.pwm, ZoneID::ALL); }

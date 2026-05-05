@@ -6,11 +6,7 @@
 #include <cstdint>
 #include <mutex>
 
-struct ZoneData {
-  uint8_t init;
-  uint8_t commit;
-  uint8_t state;
-};
+enum class ZoneID : uint8_t { LEFT = 0x05, MID = 0x04, RIGHT = 0x03, ALL = 0x00 };
 
 enum class KBPattern : uint8_t { SOLID = 0x01, BREATHE = 0x03, CYCLE = 0x06 };
 
@@ -20,7 +16,8 @@ public:
   ~KeyboardController();
 
   bool init();
-  void set_color(uint8_t r, uint8_t g, uint8_t b, uint8_t brightness, const std::string& zone_name);
+  void set_color(uint8_t r, uint8_t g, uint8_t b, uint8_t brightness, ZoneID zone);
+  void commit_color();
   void set_mode(KBPattern p);
   void restore_original();
 
@@ -48,7 +45,7 @@ private:
 
   uint8_t read_ec(uint16_t offset);
   void write_ec(uint16_t offset, uint8_t val);
-  void trigger_latch(const ZoneData& zone);
+  void trigger_latch(ZoneID zone);
   void set_mode_internal(KBPattern p);
 };
 
