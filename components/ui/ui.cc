@@ -78,6 +78,7 @@ void ExcaliburGUI::build()
         int raw_id = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(btn), "id"));
         self->selected_pattern = static_cast<KBPattern>(raw_id);
         g_print("Pattern Selected: %d\n", raw_id);
+        self->kbd_.set_mode(self->selected_pattern);
       }
     }), this);
 
@@ -121,14 +122,20 @@ void ExcaliburGUI::build()
   gtk_widget_set_margin_end(apply_btn, 20);
   gtk_widget_set_margin_bottom(apply_btn, 20);
 
-  g_signal_connect(apply_btn, "clicked", G_CALLBACK(+[](GtkButton*, gpointer data) {
+  g_object_set_data(G_OBJECT(apply_btn), "btn_solid", first_pattern);
+
+  g_signal_connect(apply_btn, "clicked", G_CALLBACK(+[](GtkButton* btn, gpointer data) {
     auto* self = static_cast<ExcaliburGUI*>(data);
     uint8_t r = (uint8_t)(self->curr_r * 255);
     uint8_t g = (uint8_t)(self->curr_g * 255);
     uint8_t b = (uint8_t)(self->curr_b * 255);
         
     self->kbd_.set_color(r, g, b, 0xFF, self->selected_zone);
-    self->kbd_.set_mode(self->selected_pattern);
+
+    GtkWidget* btn_solid = GTK_WIDGET(g_object_get_data(G_OBJECT(btn), "btn_solid"));
+    if(!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(btn_solid)))
+    { gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btn_solid), TRUE); }
+    
     gtk_widget_queue_draw(self->drawing_area_);
   }), this);
 
