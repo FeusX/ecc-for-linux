@@ -2,6 +2,7 @@
 #define UI_HH
 
 #include <gtk/gtk.h>
+#include <string>
 #include "../keyboard/keyboard.hh"
 #include "locale.hh"
 
@@ -24,6 +25,9 @@ private:
   KBPattern selected_pattern = KBPattern::SOLID;
 
   static void on_draw(GtkDrawingArea* area, cairo_t* cr, int width, int height, gpointer data);
+  std::string get_lang_path();
+  void set_lang_en();
+  void set_lang_tr();
 };
 
 #endif

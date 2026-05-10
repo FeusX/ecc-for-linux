@@ -1,6 +1,7 @@
 #include "ui.hh"
 #include "locale.hh"
 #include <cmath>
+#include <fstream>
 
 ExcaliburGUI::ExcaliburGUI(GtkApplication* app, KeyboardController& kbd, const Locale* locale) 
     : app_(app), kbd_(kbd), lang(locale) {}
@@ -140,6 +141,7 @@ void ExcaliburGUI::build()
   }), this);
 
   gtk_overlay_add_overlay(GTK_OVERLAY(o), apply_btn);
+
   gtk_window_present(GTK_WINDOW(window_));
 }
 
@@ -234,3 +236,20 @@ void ExcaliburGUI::on_draw(GtkDrawingArea* area, cairo_t* cr, int width, int hei
   cairo_set_line_width(cr, 0.6);
   draw_geo();
 }
+
+std::string get_lang_path()
+{
+  const char* user = std::getenv("SUDO_USER");
+  const char* home = std::getenv("HOME");
+  std::string path;
+
+  if(user) { path = "/home/" + std::string(user); }
+  else if(home) { path = std::string(home); }
+  else { path = "/tmp"; }
+
+  return path + "/.cache/.ecc_lang";
+}
+
+void set_lang_en() { std::remove(get_lang_path().c_str()); }
+
+void set_lang_tr() { std::ofstream file(get_lang_path()); file.close();}
