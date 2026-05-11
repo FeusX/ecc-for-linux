@@ -22,12 +22,11 @@ int main(int argc, char **argv)
   if(!kbd.init())
   { return -1; }
 
-  // THIS IS FOR TESTING PURPOSES, WILL BE REMOVED LATER
-  std::string flag_path = "/home/feusx/.cache/.ecc_lang";
   const Locale* selected_locale;
-
-  if(access(flag_path.c_str(), F_OK) == 0) { selected_locale = &TR; }
-  else { selected_locale = &EN;}
+  if(access(get_lang_path().c_str(), F_OK) == 0)
+  { selected_locale = &TR; }
+  else
+  { selected_locale = &EN; }
 
   GtkApplication *app = gtk_application_new("com.feusx.excalibur", G_APPLICATION_DEFAULT_FLAGS);
 
