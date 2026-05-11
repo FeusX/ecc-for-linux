@@ -9,7 +9,7 @@
 class ExcaliburGUI {
 public:
   ExcaliburGUI(GtkApplication* app, KeyboardController& kbd, const Locale* locale);
-  void build();
+  void build(); 
   
 private:
   GtkApplication *app_;
@@ -25,9 +25,10 @@ private:
   KBPattern selected_pattern = KBPattern::SOLID;
 
   static void on_draw(GtkDrawingArea* area, cairo_t* cr, int width, int height, gpointer data);
-  std::string get_lang_path();
-  void set_lang_en();
-  void set_lang_tr();
 };
+
+std::string get_lang_path();  
+void set_lang_en();  
+void set_lang_tr();
 
 #endif

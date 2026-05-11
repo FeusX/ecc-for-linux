@@ -2,6 +2,8 @@
 #include "locale.hh"
 #include <cmath>
 #include <fstream>
+#include <pwd.h>
+#include <unistd.h>
 
 ExcaliburGUI::ExcaliburGUI(GtkApplication* app, KeyboardController& kbd, const Locale* locale) 
     : app_(app), kbd_(kbd), lang(locale) {}
@@ -78,7 +80,7 @@ void ExcaliburGUI::build()
         auto* self = static_cast<ExcaliburGUI*>(data);
         int raw_id = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(btn), "id"));
         self->selected_pattern = static_cast<KBPattern>(raw_id);
-        g_print("Pattern Selected: %d\n", raw_id);
+        g_print("Pattern selected: %d\n", raw_id);
         self->kbd_.set_mode(self->selected_pattern);
       }
     }), this);
@@ -139,8 +141,32 @@ void ExcaliburGUI::build()
     
     gtk_widget_queue_draw(self->drawing_area_);
   }), this);
-
   gtk_overlay_add_overlay(GTK_OVERLAY(o), apply_btn);
+
+  // --- LANGUAGE SWITCH ---
+  GtkWidget* lang_toggle = gtk_button_new_with_label("TR / EN");
+  gtk_button_set_has_frame(GTK_BUTTON(lang_toggle), FALSE);
+  gtk_widget_set_halign(lang_toggle, GTK_ALIGN_START);
+  gtk_widget_set_valign(lang_toggle, GTK_ALIGN_START);
+  gtk_widget_set_margin_start(lang_toggle, 15);
+  gtk_widget_set_margin_top(lang_toggle, 15);
+
+  g_signal_connect(lang_toggle, "clicked", G_CALLBACK(+[](GtkButton*, gpointer data) {
+    auto* self = static_cast<ExcaliburGUI*>(data);
+    if(access(get_lang_path().c_str(), F_OK) == 0)
+    { set_lang_en(); }
+    else { set_lang_tr(); }
+    GtkWidget* dialog = gtk_message_dialog_new(GTK_WINDOW(self->window_),
+                                                 GTK_DIALOG_MODAL,
+                                                 GTK_MESSAGE_INFO,
+                                                 GTK_BUTTONS_OK,
+                                                 "Language changed. Please restart the app.");
+      
+      g_signal_connect_swapped(dialog, "response", G_CALLBACK(gtk_window_destroy), dialog);
+      gtk_window_present(GTK_WINDOW(dialog));
+  }), this);
+
+  gtk_overlay_add_overlay(GTK_OVERLAY(o), lang_toggle);
 
   gtk_window_present(GTK_WINDOW(window_));
 }
@@ -239,14 +265,21 @@ void ExcaliburGUI::on_draw(GtkDrawingArea* area, cairo_t* cr, int width, int hei
 
 std::string get_lang_path()
 {
-  const char* user = std::getenv("SUDO_USER");
-  const char* home = std::getenv("HOME");
+  const char* sudo_user = std::getenv("SUDO_USER");
   std::string path;
 
-  if(user) { path = "/home/" + std::string(user); }
-  else if(home) { path = std::string(home); }
-  else { path = "/tmp"; }
-
+  if(sudo_user)
+  {
+    struct passwd* pw = getpwnam(sudo_user);
+    if(pw) path = pw->pw_dir;
+  }
+  else
+  {
+    const char* home = std::getenv("HOME");
+    if(home) path = home;
+  }
+    
+  if(path.empty()) return "/tmp/.ecc_lang";
   return path + "/.cache/.ecc_lang";
 }
 
