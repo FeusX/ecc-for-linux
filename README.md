@@ -5,4 +5,4 @@
 
 <h3>GPU kontrolü eklediğimde daha iyi belgelendireceğim.</h3>
 
-https://github.com/FeusX/ecc-for-linux/blob/main/ecc.png
+![Türçke arayüz](https://raw.githubusercontent.com/FeusX/ecc-for-linux/main/ecc.png)
