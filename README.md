@@ -1,4 +1,3 @@
 # ecc-for-linux
-excalibur control center for linux.
+<h1> Excalibur Control Center Uygulamasının Linux Portu. </h1>
 
-burayı doldurucam bi ara
