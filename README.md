@@ -5,4 +5,6 @@
 
 <h3>GPU kontrolü eklediğimde daha iyi belgelendireceğim.</h3>
 
-![Türçke arayüz](https://raw.githubusercontent.com/FeusX/ecc-for-linux/main/ecc.png)
+![Türkçe arayüz](https://raw.githubusercontent.com/FeusX/ecc-for-linux/main/ecc.png)
+
+<h3>`g++ main.cc components/keyboard/keyboard.cc components/ui/ui.cc -o ecc -pthread $(pkg-config --cflags --libs gtk4)` compile with this command.</h3>
