@@ -11,6 +11,7 @@ struct Locale {
   std::string pattern_solid;
   std::string pattern_cycle;
   std::string pattern_pulse;
+  std::string pattern_ambilight;
   std::string btn_apply;
 };
 
@@ -22,6 +23,7 @@ const Locale TR = {
   "Durağan",
   "Döngü",
   "Dalga",
+  "Ambiyans",
   "Uygula"
 };
 
@@ -33,6 +35,7 @@ const Locale EN = {
   "Solid",
   "Cycle",
   "Pulse",
+  "Ambilight",
   "Apply"
 };
 

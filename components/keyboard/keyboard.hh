@@ -8,7 +8,7 @@
 
 enum class ZoneID : uint8_t { ALL = 0x00, LEFT = 0x50, MID = 0x40, RIGHT = 0x30 };
 
-enum class KBPattern : uint8_t { SOLID = 0x01, BREATHE = 0x03, CYCLE = 0x06 };
+enum class KBPattern : uint8_t { SOLID = 0x01, BREATHE = 0x03, CYCLE = 0x06, AMBILIGHT = 0x07 };
 
 class KeyboardController {
 public:

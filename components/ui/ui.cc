@@ -64,12 +64,12 @@ void ExcaliburGUI::build()
   gtk_widget_set_halign(right_box, GTK_ALIGN_END);
   gtk_widget_set_margin_end(right_box, 20);
 
-  const char* pattern_labels[] = { lang->pattern_solid.c_str(), lang->pattern_pulse.c_str(), lang->pattern_cycle.c_str() };
-  KBPattern patterns[] = { KBPattern::SOLID, KBPattern::BREATHE, KBPattern::CYCLE };
+  const char* pattern_labels[] = { lang->pattern_solid.c_str(), lang->pattern_pulse.c_str(), lang->pattern_cycle.c_str(), lang->pattern_ambilight.c_str() };
+  KBPattern patterns[] = { KBPattern::SOLID, KBPattern::BREATHE, KBPattern::CYCLE, KBPattern::AMBILIGHT };
 
   GtkWidget* first_pattern = nullptr;
-  for(int i = 0; i < 3; i++)
-  {
+  for(int i = 0; i < 4; i++) // DEAR SOFTWARE DEVELOPERS, DO NOT HARD CODE VALUES LIKE THIS.
+  {                          // WHY DID I DO THAT? BECAUSE I AM A DUMBASS.
     GtkWidget* b = gtk_toggle_button_new_with_label(pattern_labels[i]);
     if(i == 0) { first_pattern = b; }
     else { gtk_toggle_button_set_group(GTK_TOGGLE_BUTTON(b), GTK_TOGGLE_BUTTON(first_pattern)); }
