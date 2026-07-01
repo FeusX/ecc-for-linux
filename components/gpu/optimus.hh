@@ -1,5 +1,5 @@
 /*
-  Heavily inspired (almost copied) from envycontrol.
+  Heavily inspired from envycontrol.
   Thank you bayasdev for making optimus easier.
   Credit: https://github.com/bayasdev/envycontrol
 */
@@ -12,6 +12,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <cstring>
+#include <cstdio>
 
 class OptimusSwitch {
 public:
@@ -117,12 +118,16 @@ public:
   "alias nvidia_modeset off\n";
 
 	void switch_to_igpu(void);
-	void write_file(const char *path, const char *content, bool exec);
+	void write_file(const char *path, const char *content, bool exec = false);
 	void cleanup(void);
 	void rebuild_initramfs(void);
 	void optimus_remove(const char* path);
 	void edit_sddm(void);
 	void switch_to_dgpu(void);
+
+	bool get_nvidia_pci_bus(char *out, size_t outlen);
+
+	char *get_display_manager(void);
 };
 
 #endif
