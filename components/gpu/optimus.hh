@@ -124,6 +124,7 @@ public:
 	void optimus_remove(const char* path);
 	void edit_sddm(void);
 	void switch_to_dgpu(void);
+	void switch_gpus(bool k);
 
 	bool get_nvidia_pci_bus(char *out, size_t outlen);
 

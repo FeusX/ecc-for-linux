@@ -216,3 +216,48 @@ void OptimusSwitch::switch_to_dgpu(void)
 
   std::cout << "reboot it" << std::endl;
 }
+
+void OptimusSwitch::switch_gpus(bool k)
+{
+  std::string kernel_cache_path;
+  const char* home = std::getenv("HOME");
+
+  if(home) { kernel_cache_path = std::string(home) + "/.cache/.kernel_cache"; }
+  else { std::cout << "[ERROR] Failed to get cache path." << std::endl; }
+
+  struct utsname buff;
+  if(uname(&buff) != 0)
+  { std::cout "[ERROR] Failed to get the kernel version." << std::endl; return; }
+
+  std::string current_kernel = buff.release;
+
+  if(access(kernel_cache_path.c_str(), F_OK) != 0)
+  {
+    std::ofstream cache_out(kernel_cache_path);
+    cache_out << current_kernel;
+    cache_out.close();
+
+    std::system("cd nvidia && make");
+    std::system("cd nvidia && make clean");
+
+    std::system("cd intel && make");
+    std::system("cd intel && make clean");
+  }
+  else
+  {
+    std::ifstream cache_in(kernel_cache_path);
+    std::string cached_kernel;
+    std::getline(cache_in, cached_kernel);
+    cache_in.close();
+
+    if(cached_kernel != current_kernel)
+    {
+      // delete old kernel and build and load
+      // and also overwrite prev one
+    }
+    else
+    {
+      // load old one
+    }
+  }
+}
