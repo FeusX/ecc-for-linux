@@ -21,12 +21,13 @@ KeyboardController::~KeyboardController()
 
 bool KeyboardController::init()
 {
-  if(ec_fd == -1) // check if root
-  {
-    std::cerr << "[WARNING] Ec I/O not found. Trying to load ec_sys..." << std::endl;
-    std::system("modprobe ec_sys write_support=1");
-    std::cout << "[LOG] ec_sys loaded." << std::endl;
+  std::system("modprobe ec_sys write_support=1 2>/dev/null");
+  std::ofstream ws("/sys/module/ec_sys/parameters/write_support");
+  if(ws) { ws << "1"; }
 
+  if(ec_fd == -1)
+  {
+    std::cerr << "[WARNING] EC I/O not found, retrying..." << std::endl;
     ec_fd = open(EC_PATH, O_RDWR);
   }
 
@@ -35,7 +36,7 @@ bool KeyboardController::init()
     std::cerr << "[ERROR] Cannot access Embedded Controller. Please run as root." << std::endl;
     return false;
   }
-  
+
   orig_state.r = read_ec(REG_RED);
   orig_state.g = read_ec(REG_GREEN);
   orig_state.b = read_ec(REG_BLUE);
