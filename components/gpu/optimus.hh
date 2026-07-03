@@ -127,12 +127,11 @@ public:
 	void edit_sddm(void);
 	void switch_to_dgpu(void);
 	void switch_gpus(bool k);
+	void rebuild_module(bool nv, const std::string& cache_path);
 
 	bool get_nvidia_pci_bus(char *out, size_t outlen);
 
 	char *get_display_manager(void);
 };
-
-void rebuild_module(bool nv);
 
 #endif

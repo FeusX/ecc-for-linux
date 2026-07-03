@@ -4,16 +4,18 @@
 #include <gtk/gtk.h>
 #include <string>
 #include "../keyboard/keyboard.hh"
+#include "../gpu/optimus.hh"
 #include "locale.hh"
 
 class ExcaliburGUI {
 public:
-  ExcaliburGUI(GtkApplication* app, KeyboardController& kbd, const Locale* locale);
+  ExcaliburGUI(GtkApplication* app, KeyboardController& kbd, const Locale* locale, OptimusSwitch& gpu_switch);
   void build(); 
   
 private:
   GtkApplication *app_;
   KeyboardController& kbd_;
+  OptimusSwitch& switch_;
   GtkWidget *window_;
   GtkWidget *drawing_area_;
 

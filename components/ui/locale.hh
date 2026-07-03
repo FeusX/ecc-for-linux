@@ -13,6 +13,7 @@ struct Locale {
   std::string pattern_pulse;
   std::string pattern_ambilight;
   std::string btn_apply;
+  std::string gpu_warning;
 };
 
 const Locale TR = {
@@ -24,7 +25,8 @@ const Locale TR = {
   "Döngü",
   "Dalga",
   "Ambiyans",
-  "Uygula"
+  "Uygula",
+  "Sakın terminalde rebootlayabileceğine dair bir mesaj çıkana kadar uygulamayı kapatma. Aksi takdirde sorumluluk kabul etmiyorum."
 };
 
 const Locale EN = {
@@ -36,7 +38,8 @@ const Locale EN = {
   "Cycle",
   "Pulse",
   "Ambilight",
-  "Apply"
+  "Apply",
+  "Don't ever close the app until terminal says you can reboot. Otherwise, I accept no responsibility."
 };
 
 #endif

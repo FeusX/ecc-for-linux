@@ -5,8 +5,8 @@
 #include <pwd.h>
 #include <unistd.h>
 
-ExcaliburGUI::ExcaliburGUI(GtkApplication* app, KeyboardController& kbd, const Locale* locale) 
-    : app_(app), kbd_(kbd), lang(locale) {}
+ExcaliburGUI::ExcaliburGUI(GtkApplication* app, KeyboardController& kbd, const Locale* locale, OptimusSwitch& gpu_switch) 
+    : app_(app), kbd_(kbd), lang(locale), switch_(gpu_switch) {}
 
 GtkWidget* create_ui_button(const char* label, const char* css_class = nullptr)
 {
@@ -58,6 +58,46 @@ void ExcaliburGUI::build()
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(first_zone), TRUE);
   gtk_overlay_add_overlay(GTK_OVERLAY(o), top_box);
 
+  // --- GPU SWITCH ---
+  GtkWidget* gpu_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
+  gtk_widget_set_valign(gpu_box, GTK_ALIGN_START);
+  gtk_widget_set_halign(gpu_box, GTK_ALIGN_CENTER);
+  gtk_widget_set_margin_top(gpu_box, 65);
+
+  GtkWidget* nvidia_btn = gtk_toggle_button_new_with_label("Nvidia");
+  GtkWidget* intel_btn  = gtk_toggle_button_new_with_label("Intel");
+  gtk_toggle_button_set_group(GTK_TOGGLE_BUTTON(intel_btn), GTK_TOGGLE_BUTTON(nvidia_btn));
+
+  g_signal_connect(nvidia_btn, "toggled", G_CALLBACK(+[](GtkToggleButton* btn, gpointer data) {
+    if(gtk_toggle_button_get_active(btn)) {
+      auto* self = static_cast<ExcaliburGUI*>(data);
+      GtkAlertDialog *dialog = gtk_alert_dialog_new("!!!!!!!!");
+      gtk_alert_dialog_set_detail(dialog, self->lang->gpu_warning.c_str());
+      gtk_alert_dialog_show(dialog, GTK_WINDOW(self->window_));
+
+      while(g_main_context_pending(NULL)) { g_main_context_iteration(NULL, FALSE); }
+      self->switch_.switch_gpus(1);
+    }
+  }), this);
+
+  g_signal_connect(intel_btn, "toggled", G_CALLBACK(+[](GtkToggleButton* btn, gpointer data) {
+    if(gtk_toggle_button_get_active(btn)) {
+      auto* self = static_cast<ExcaliburGUI*>(data);
+
+      GtkAlertDialog *dialog = gtk_alert_dialog_new("!!!!!!!!");
+      gtk_alert_dialog_set_detail(dialog, self->lang->gpu_warning.c_str());
+      gtk_alert_dialog_show(dialog, GTK_WINDOW(self->window_));
+      
+      while(g_main_context_pending(NULL)) { g_main_context_iteration(NULL, FALSE); }
+      
+      self->switch_.switch_gpus(0);
+    }
+  }), this);
+
+  gtk_box_append(GTK_BOX(gpu_box), nvidia_btn);
+  gtk_box_append(GTK_BOX(gpu_box), intel_btn);
+  gtk_overlay_add_overlay(GTK_OVERLAY(o), gpu_box);
+
   // --- COLOR PATTERNS ---
   GtkWidget* right_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
   gtk_widget_set_valign(right_box, GTK_ALIGN_CENTER);
@@ -69,7 +109,7 @@ void ExcaliburGUI::build()
 
   GtkWidget* first_pattern = nullptr;
   for(int i = 0; i < 4; i++) // DEAR SOFTWARE DEVELOPERS, DO NOT HARD CODE VALUES LIKE THIS.
-  {                          // WHY DID I DO THAT? BECAUSE I AM A DUMBASS.
+  {
     GtkWidget* b = gtk_toggle_button_new_with_label(pattern_labels[i]);
     if(i == 0) { first_pattern = b; }
     else { gtk_toggle_button_set_group(GTK_TOGGLE_BUTTON(b), GTK_TOGGLE_BUTTON(first_pattern)); }

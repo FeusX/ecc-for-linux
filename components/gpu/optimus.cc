@@ -1,4 +1,5 @@
 #include "optimus.hh"
+#include "modules.hh"
 
 void OptimusSwitch::write_file(const char* path, const char* content, bool exec)
 {
@@ -75,6 +76,35 @@ void OptimusSwitch::rebuild_initramfs(void)
   std::cout << "[LOG] Rebuilding initramfs..." << std::endl;
   if(system(cmd) != 0)
   { std::cout << "[ERROR] initramfs rebuild failed." << std::endl; }
+}
+
+void OptimusSwitch::rebuild_module(bool nv, const std::string& cache_path)
+{
+  std::string src_path, makefile_path, build_cmd, clean_cmd;
+
+  if(nv == true)
+  {
+    src_path = cache_path + "/nvidia_probe.c";
+    makefile_path = cache_path + "/Makefile";
+    build_cmd = "cd " + cache_path + " && make";
+    clean_cmd = "cd " + cache_path + " && rm -f Module.symvers nvidia_probe.mod.c nvidia_probe.o modules.order nvidia_probe.mod nvidia_probe.mod.o";
+
+    write_file(src_path.c_str(), NVIDIA_PROBE_SRC, false);
+    write_file(makefile_path.c_str(), NVIDIA_MAKEFILE, false);
+  }
+  else
+  {
+    src_path = cache_path + "/intel_probe.c";
+    makefile_path = cache_path + "/Makefile";
+    build_cmd = "cd " + cache_path + " && make";
+    clean_cmd = "cd " + cache_path + " && rm -f intel_probe.mod intel_probe.mod.o Module.symvers intel_probe.mod.c intel_probe.o modules.order"; 
+    
+    write_file(src_path.c_str(), INTEL_PROBE_SRC, false);
+    write_file(makefile_path.c_str(), INTEL_MAKEFILE, false);
+  }
+
+  std::system(build_cmd.c_str());
+  std::system(clean_cmd.c_str());
 }
 
 static void pci_rescan(void)
@@ -157,20 +187,6 @@ char *OptimusSwitch::get_display_manager(void)
   return result;
 }
 
-void rebuild_module(bool nv)
-{
-  if(nv == true)
-  {
-    std::system("cd nvidia && make");
-    std::system("cd nvidia && rm Module.symvers nvidia_probe.mod.c nvidia_probe.o modules.order nvidia_probe.mod nvidia_probe.mod.o");
-  }
-  else
-  {
-    std::system("cd intel && make");
-    std::system("cd intel && rm intel_probe.mod intel_probe.mod.o Module.symvers intel_probe.mod.c intel_probe.o modules.order"); 
-  }
-}
-
 void OptimusSwitch::switch_to_igpu(void)
 {
   std::system("systemctl disable nvidia-persistenced.service >/dev/null 2>&1");
@@ -235,16 +251,15 @@ void OptimusSwitch::switch_to_dgpu(void)
 
   rebuild_initramfs();
 
-  std::cout << "reboot it" << std::endl;
+  std::cout << "[OK] Succesfully switched to dGPU. Reboot for changes to take effect." << std::endl;
 }
 
 void OptimusSwitch::switch_gpus(bool k)
 {
-  std::string kernel_cache_path;
-  const char* home = std::getenv("HOME");
+  std::string module_cache_path = "/var/cache/ecc-switch";
+  std::string kernel_cache_path = "/var/cache/ecc-switch/.kernel_cache";
 
-  if(home) { kernel_cache_path = std::string(home) + "/.cache/.kernel_cache"; } 
-  else { std::cout << "[ERROR] Failed to get cache path." << std::endl; return; }
+  std::system(("mkdir -p " + module_cache_path).c_str());
 
   struct utsname buff;
   if(uname(&buff) != 0)
@@ -266,8 +281,8 @@ void OptimusSwitch::switch_gpus(bool k)
   {
     // rebuild the modules
     std::cout << "[LOG] Rebuilding kernel modules for " << current_kernel << std::endl;
-    rebuild_module(1);
-    rebuild_module(0);
+    rebuild_module(1, module_cache_path);
+    rebuild_module(0, module_cache_path);
 
     // update the cache
     std::ofstream cache_out(kernel_cache_path);
@@ -275,16 +290,18 @@ void OptimusSwitch::switch_gpus(bool k)
     cache_out.close();
   }
 
-  if(k == true)
+  if(k == true) // nvidia on
   {
-    std::system("cd nvidia && insmod nvidia_probe.ko");
+    std::string insmod_cmd = "insmod " + module_cache_path + "/nvidia_probe.ko";
+    std::system(insmod_cmd.c_str());
     switch_to_dgpu();
     sleep(1);
     std::system("rmmod nvidia_probe");
   }
-  else
+  else          // nvidia off
   {
-    std::system("cd intel && insmod intel_probe.ko");
+    std::string insmod_cmd = "insmod " + module_cache_path + "/intel_probe.ko";
+    std::system(insmod_cmd.c_str());
     switch_to_igpu();
     sleep(1);
     std::system("rmmod intel_probe");

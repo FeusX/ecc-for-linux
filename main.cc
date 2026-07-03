@@ -6,14 +6,16 @@
 #include "components/keyboard/keyboard.hh"
 #include "components/ui/ui.hh"
 #include "components/ui/locale.hh"
+#include "components/gpu/optimus.hh"
 
 static KeyboardController kbd;
+static OptimusSwitch gpu_switch;
 
 static void on_activate(GtkApplication *app, gpointer u_data)
 {
   const Locale* selected = static_cast<const Locale*>(u_data);
   
-  ExcaliburGUI* g = new ExcaliburGUI(app, kbd, selected);
+  ExcaliburGUI* g = new ExcaliburGUI(app, kbd, selected, gpu_switch);
   g->build();
 }
 
