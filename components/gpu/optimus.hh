@@ -13,6 +13,8 @@
 #include <sys/stat.h>
 #include <cstring>
 #include <cstdio>
+#include <fstream>
+#include <sys/utsname.h>
 
 class OptimusSwitch {
 public:
@@ -130,5 +132,7 @@ public:
 
 	char *get_display_manager(void);
 };
+
+void rebuild_module(bool nv);
 
 #endif

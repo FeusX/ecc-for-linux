@@ -36,6 +36,8 @@ void OptimusSwitch::edit_sddm(void)
     fclose(b);
     write_file(SDDM_XSETUP_PATH, buf, 1);
   }
+  else
+  { std::cout << "[WARNING] Found an Xsetup backup but could not open it." << std::endl; }
 
   optimus_remove(SDDM_XSETUP_BAK_PATH);
 }
@@ -55,6 +57,8 @@ void OptimusSwitch::cleanup(void)
   optimus_remove(LEGACY_UDEV_PM_PATH);
 
   edit_sddm();
+
+  std::system("udevadm control --reload");
 }
 
 void OptimusSwitch::rebuild_initramfs(void)
@@ -80,6 +84,8 @@ static void pci_rescan(void)
   {
     fputs("1", f);
     fclose(f);
+
+    sleep(1);
   }
   else
   {
@@ -90,6 +96,7 @@ static void pci_rescan(void)
 bool OptimusSwitch::get_nvidia_pci_bus(char *out, size_t outlen)
 {
   pci_rescan();
+
   FILE *p = popen("lspci", "r");
   if(!p) { return false; }
 
@@ -148,6 +155,20 @@ char *OptimusSwitch::get_display_manager(void)
 
   fclose(f);
   return result;
+}
+
+void rebuild_module(bool nv)
+{
+  if(nv == true)
+  {
+    std::system("cd nvidia && make");
+    std::system("cd nvidia && rm Module.symvers nvidia_probe.mod.c nvidia_probe.o modules.order nvidia_probe.mod nvidia_probe.mod.o");
+  }
+  else
+  {
+    std::system("cd intel && make");
+    std::system("cd intel && rm intel_probe.mod intel_probe.mod.o Module.symvers intel_probe.mod.c intel_probe.o modules.order"); 
+  }
 }
 
 void OptimusSwitch::switch_to_igpu(void)
@@ -222,42 +243,50 @@ void OptimusSwitch::switch_gpus(bool k)
   std::string kernel_cache_path;
   const char* home = std::getenv("HOME");
 
-  if(home) { kernel_cache_path = std::string(home) + "/.cache/.kernel_cache"; }
-  else { std::cout << "[ERROR] Failed to get cache path." << std::endl; }
+  if(home) { kernel_cache_path = std::string(home) + "/.cache/.kernel_cache"; } 
+  else { std::cout << "[ERROR] Failed to get cache path." << std::endl; return; }
 
   struct utsname buff;
   if(uname(&buff) != 0)
-  { std::cout "[ERROR] Failed to get the kernel version." << std::endl; return; }
+  { std::cout << "[ERROR] Failed to get the kernel version." << std::endl; return; }
 
   std::string current_kernel = buff.release;
+  std::string cached_kernel = ""; // empty by default
 
-  if(access(kernel_cache_path.c_str(), F_OK) != 0)
+  // if kernel cache exists, read the cache
+  if(access(kernel_cache_path.c_str(), F_OK) == 0)
   {
+    std::ifstream cache_in(kernel_cache_path);
+    std::getline(cache_in, cached_kernel);
+    cache_in.close();
+  }
+
+  // if no kernel cache or outdated
+  if(cached_kernel != current_kernel)
+  {
+    // rebuild the modules
+    std::cout << "[LOG] Rebuilding kernel modules for " << current_kernel << std::endl;
+    rebuild_module(1);
+    rebuild_module(0);
+
+    // update the cache
     std::ofstream cache_out(kernel_cache_path);
     cache_out << current_kernel;
     cache_out.close();
+  }
 
-    std::system("cd nvidia && make");
-    std::system("cd nvidia && make clean");
-
-    std::system("cd intel && make");
-    std::system("cd intel && make clean");
+  if(k == true)
+  {
+    std::system("cd nvidia && insmod nvidia_probe.ko");
+    switch_to_dgpu();
+    sleep(1);
+    std::system("rmmod nvidia_probe");
   }
   else
   {
-    std::ifstream cache_in(kernel_cache_path);
-    std::string cached_kernel;
-    std::getline(cache_in, cached_kernel);
-    cache_in.close();
-
-    if(cached_kernel != current_kernel)
-    {
-      // delete old kernel and build and load
-      // and also overwrite prev one
-    }
-    else
-    {
-      // load old one
-    }
+    std::system("cd intel && insmod intel_probe.ko");
+    switch_to_igpu();
+    sleep(1);
+    std::system("rmmod intel_probe");
   }
 }
