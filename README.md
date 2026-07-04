@@ -9,6 +9,6 @@
 
 ![Türkçe arayüz](https://raw.githubusercontent.com/FeusX/ecc-for-linux/main/ecc.png)
 
-<h1> [![A video about making these kind of things](https://www.youtube.com/watch?v=kM0D9CpnmQY)](https://www.youtube.com/watch?v=kM0D9CpnmQY) </h1>
+[![A video about making these kind of things](https://www.youtube.com/watch?v=kM0D9CpnmQY)](https://www.youtube.com/watch?v=kM0D9CpnmQY)
 
 ```g++ main.cc components/keyboard/keyboard.cc components/ui/ui.cc -o components/gpu/optimus.cc ecc -pthread $(pkg-config --cflags --libs gtk4)``` compile with this command.
